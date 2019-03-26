@@ -72,7 +72,7 @@ class MenuController extends CommonController
      * @param $id
      * @return View
      */
-    public function show($id)
+    public function edit($id)
     {
         return parent::xEdit($id, ['parent']);
     }
