@@ -1,0 +1,19 @@
+{
+    "name": "yeosz/laravel-curd",
+    "description": "laravel curd",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "weihua",
+            "email": "ye.osz@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Yeosz\\LaravelCurd\\": "src"
+        }
+    }
+}
