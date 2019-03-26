@@ -12,7 +12,6 @@ composer require "yeosz/laravel-curd"
 
 请参考examples
 
->
-ApiException 定义了通用的接口错误码,直接用
-ApiRequest Request请继承它
-Traits 请参考examples
+> ApiException 定义了通用的接口错误码,直接用
+> ApiRequest Request请继承它
+> Traits 请参考examples
