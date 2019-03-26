@@ -39,7 +39,7 @@ trait CurdTrait
     protected function xCreate()
     {
         if (empty($this->view['create'])) {
-            return $this->showErrorPage('请配置模板');
+            throw new \Exception('请配置模板', 4000);
         } else {
             return view($this->view['create'], $this->assign);
         }
@@ -96,6 +96,7 @@ trait CurdTrait
      * 详情
      *
      * @param $id
+     * @param $loads
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
@@ -140,7 +141,6 @@ trait CurdTrait
 
         return $this->responseSuccess();
     }
-
 
     /**
      * 修改列
@@ -241,8 +241,9 @@ trait CurdTrait
     }
 
     /**
-     * 批量删除
+     * 删除
      *
+     * @param $id
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
@@ -276,7 +277,7 @@ trait CurdTrait
     /**
      * 获取模型
      *
-     * @return Model
+     * @return \Illuminate\Database\Eloquent\Model
      * @throws \Exception
      */
     protected function getModel()

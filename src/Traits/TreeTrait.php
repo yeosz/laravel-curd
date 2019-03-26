@@ -12,7 +12,7 @@ trait TreeTrait
      * @param string $model 模型
      * @return array
      */
-    protected function getTreeList($parentColumn, $sortColumn, $model = null)
+    protected function getTreeList($parentColumn, $sortColumn, $model)
     {
         $model = new $model;
 
@@ -40,7 +40,7 @@ trait TreeTrait
             $model = new $model;
         }
 
-        /** @var Model $model */
+        /** @var \Illuminate\Database\Eloquent\Model $model */
         $trees = $model->orderBy($parentColumn, 'asc')->get();
 
         $tree = $this->treeSort($trees->toArray(), 'id', $parentColumn, 'id', 'index_path');
