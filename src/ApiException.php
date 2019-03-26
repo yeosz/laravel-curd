@@ -104,10 +104,9 @@ class ApiException extends Exception
     public function render()
     {
         if (is_null($this->data)) {
-            return \Response::json(['code' => $this->code, 'message' => $this->message]);
-
+            return response()->json(['code' => $this->code, 'message' => $this->message]);
         } else {
-            return \Response::json(['code' => $this->code, 'message' => $this->message, 'data' => $this->data]);
+            return response()->json(['code' => $this->code, 'message' => $this->message, 'data' => $this->data]);
         }
     }
 }

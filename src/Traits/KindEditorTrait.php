@@ -244,12 +244,4 @@ trait KindEditorTrait
 
         return $filePath;
     }
-
-    /**
-     * 获取根目录
-     */
-    protected function initTrait()
-    {
-
-    }
 }
