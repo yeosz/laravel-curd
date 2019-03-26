@@ -1,4 +1,8 @@
 <?php
+/**
+ * 增删改的通用方法
+ *
+ */
 
 namespace Yeosz\LaravelCurd\Traits;
 
@@ -6,6 +10,7 @@ trait CurdTrait
 {
     use ResponseTrait;
 
+//    // 以下定义到Controller中
 //    /**
 //     * 模型
 //     *
@@ -31,7 +36,7 @@ trait CurdTrait
     public $assign = [];
 
     /**
-     * 新增
+     * 新增页
      *
      * @return \Illuminate\View\View
      * @throws \Exception
@@ -46,7 +51,7 @@ trait CurdTrait
     }
 
     /**
-     * 新增
+     * 保存
      *
      * @param \Illuminate\Http\Request|array $request
      * @return \Illuminate\Http\JsonResponse
@@ -66,7 +71,7 @@ trait CurdTrait
     }
 
     /**
-     * 详情
+     * 编辑页
      *
      * @param int $id
      * @param array $loads
@@ -93,7 +98,7 @@ trait CurdTrait
     }
 
     /**
-     * 详情
+     * 详情接口
      *
      * @param $id
      * @param $loads
@@ -115,7 +120,7 @@ trait CurdTrait
     }
 
     /**
-     * 修改
+     * 修改的接口
      *
      * @param $id
      * @param $request

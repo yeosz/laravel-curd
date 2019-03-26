@@ -1,4 +1,9 @@
 <?php
+/**
+ * 对接口response的封装
+ * 返回JSON
+ *
+ */
 
 namespace Yeosz\LaravelCurd\Traits;
 

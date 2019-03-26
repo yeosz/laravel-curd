@@ -1,4 +1,8 @@
 <?php
+/**
+ * 树形结构通用方法
+ *
+ */
 
 namespace Yeosz\LaravelCurd\Traits;
 

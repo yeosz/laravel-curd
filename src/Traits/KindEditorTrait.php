@@ -1,5 +1,12 @@
 <?php
-
+/**
+ * KindEditor编辑器的接口
+ *
+ * 路由定义参考:
+ * Route::post('/kind_editor/upload', 'KindEditorController@upload'); // 上传
+ * Route::get('/kind_editor/system', 'KindEditorController@system'); // 目录结构
+ */
+ 
 namespace Yeosz\LaravelCurd\Traits;
 
 trait KindEditorTrait
