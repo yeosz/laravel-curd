@@ -5,8 +5,9 @@
  * 路由定义参考:
  * Route::post('/kind_editor/upload', 'KindEditorController@upload'); // 上传
  * Route::get('/kind_editor/system', 'KindEditorController@system'); // 目录结构
+ * 需要修改别的存储路径请重新定义getFilePath方法
  */
- 
+
 namespace Yeosz\LaravelCurd\Traits;
 
 trait KindEditorTrait
@@ -55,13 +56,7 @@ trait KindEditorTrait
         }
         $fileType = $fileType == 'image' ? 'images' : 'attachments';
 
-        // 本地存储路径为：app/uploads/editor
-        $dirArr = [
-            'uploads',
-            'editor',
-            $fileType,
-        ];
-        $dir = public_path(implode($this->directorySeparator, $dirArr));
+        list($dir, $url) = $this->getFilePath($fileType, 1);
 
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0777, true)) {
@@ -72,7 +67,6 @@ trait KindEditorTrait
         if ($fileType == 'images') {
             // 使用文件md5哈希值作为文件名
             $filename = md5_file($file->path()) . '.' . strtolower($file->getClientOriginalExtension());
-            //$path = $dir . $this->directorySeparator . $filename;
         } else {
             // 使用原始文件名
             $filename = strtolower($file->getClientOriginalName());
@@ -92,7 +86,7 @@ trait KindEditorTrait
 
         $file->move($dir, $filename);
 
-        $url = $this->directorySeparator . implode($this->directorySeparator, $dirArr) . $this->directorySeparator . $filename;
+        $url = $url . $filename;
 
         return ['error' => 0, 'url' => $url];
     }
@@ -110,16 +104,16 @@ trait KindEditorTrait
         if (!in_array($dirName, ['', 'image', 'flash', 'media', 'file'])) {
             return 'Invalid Directory name';
         }
-        $dirName = $dirName == 'image' ? 'images' : 'attachments';
+        $fileType = $dirName == 'image' ? 'images' : 'attachments';
 
-        $dir = public_path('uploads' . $this->directorySeparator . 'editor' . $this->directorySeparator . $dirName . $this->directorySeparator);
+        list($dir, $rootUrl) = $this->getFilePath($fileType, 0);
+
         if (!is_dir($dir)) {
             mkdir($dir, 0777, true);
         }
 
         $rootPath = $dir . $this->directorySeparator;
         $extArr = ['gif', 'jpg', 'jpeg', 'png', 'bmp'];
-        $rootUrl = "/uploads/editor/{$dirName}/";
 
         // 根据path参数，设置各路径和URL
         if (empty($request->input('path'))) {
@@ -250,5 +244,32 @@ trait KindEditorTrait
         }
 
         return $filePath;
+    }
+
+    /**
+     * 存储路径,以及url
+     * 需要修改路径请重新定义该方法
+     *
+     * @param $fileType
+     * @param $period 0无,1按月,2按天
+     * @return array
+     */
+    protected function getFilePath($fileType, $period = 0)
+    {
+        $dirArr = [
+            'uploads',
+            'editor',
+            $fileType,
+        ];
+        if ($period) {
+            $periodDir = $period == 1 ? date('Ym') : date('Ymd');
+            $dirArr[] = $periodDir;
+        }
+
+        $url = implode('/', $dirArr);
+        $dir = public_path($url);
+        $url = '/' . $url . '/';
+
+        return [$dir, $url];
     }
 }
