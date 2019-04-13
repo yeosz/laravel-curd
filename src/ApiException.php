@@ -99,7 +99,8 @@ class ApiException extends Exception
 
     /**
      * Render an exception into an HTTP response.
-     ** @return \Illuminate\Http\Response
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
     public function render()
     {

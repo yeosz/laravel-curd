@@ -80,4 +80,21 @@ class ApiRequest extends FormRequest
         }
         return $arr;
     }
+
+    /**
+     * 转换规则,兼容X-editable组件
+     *
+     * @param $rules
+     * @return array
+     */
+    public function xEditableRules($rules)
+    {
+        if ($this->has(['pk', 'name', 'value'])) {
+            return [
+                'value' => $rules[$this->name]
+            ];
+        } else {
+            return $rules;
+        }
+    }
 }

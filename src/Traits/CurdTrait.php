@@ -6,6 +6,8 @@
 
 namespace Yeosz\LaravelCurd\Traits;
 
+use Yeosz\LaravelCurd\ApiException;
+
 trait CurdTrait
 {
     use ResponseTrait;
@@ -39,12 +41,12 @@ trait CurdTrait
      * 新增页
      *
      * @return \Illuminate\View\View
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xCreate()
     {
         if (empty($this->view['create'])) {
-            throw new \Exception('请配置模板', 4000);
+            throw new ApiException('请配置模板');
         } else {
             return view($this->view['create'], $this->assign);
         }
@@ -76,17 +78,17 @@ trait CurdTrait
      * @param int $id
      * @param array $loads
      * @return \Illuminate\View\View
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xEdit($id, $loads = [])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
-            throw new \Exception('数据不存在', 4010);
+            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
         if (empty($this->view['edit'])) {
-            throw new \Exception('请配置模板', 4000);
+            throw new ApiException('请配置模板');
         }
         foreach ($loads as $load) {
             $row->load($load);
@@ -103,14 +105,14 @@ trait CurdTrait
      * @param $id
      * @param $loads
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xShow($id, $loads = [])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
-            throw new \Exception('数据不存在', 4010);
+            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
         foreach ($loads as $load) {
             $row->load($load);
@@ -125,13 +127,13 @@ trait CurdTrait
      * @param $id
      * @param $request
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xUpdate($id, $request)
     {
         $row = $this->getModel()->find($id);
         if (!$row) {
-            throw new \Exception('数据不存在', 4010);
+            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
 
         if ($request instanceof \Illuminate\Http\Request) {
@@ -154,20 +156,20 @@ trait CurdTrait
      * @param array|\Illuminate\Http\Request $new 待保存的内容
      * @param array $valueIn 取值范围
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xUpdateColumn($id, $new, $valueIn = [])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
-            throw new \Exception('数据不存在', 4010);
+            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
         if ($new instanceof \Illuminate\Http\Request) {
             $new = $new->all();
         }
         if (!is_array($new) || empty($new)) {
-            throw new \Exception('参数异常', 4010);
+            throw new ApiException('参数异常', ApiException::ERROR_NOT_FOUND);
         }
         if (!empty($new['name']) && !empty($new['value'])) {
             $column = $new['name'];
@@ -178,13 +180,13 @@ trait CurdTrait
         }
 
         if ($valueIn && !in_array($value, $valueIn)) {
-            throw new \Exception('参数不合法', 4010);
+            throw new ApiException('参数不合法', ApiException::ERROR_NOT_FOUND);
         }
 
         try {
             $row->update([$column => $value]);
         } catch (\Exception $e) {
-            throw new \Exception($e->getMessage(), 4000);
+            throw new ApiException($e->getMessage());
         }
 
         return $this->responseSuccess('修改成功');
@@ -197,7 +199,7 @@ trait CurdTrait
      * @param string $column 修改的列
      * @param array $valueIn 取值范围
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     public function xBatchUpdateColumn(\Illuminate\Http\Request $request, $column, $valueIn = [])
     {
@@ -206,7 +208,7 @@ trait CurdTrait
         $newValue = $request->input($column, '');
 
         if ($valueIn && !in_array($newValue, $valueIn)) {
-            throw new \Exception('参数错误', 4000);
+            throw new ApiException('参数错误');
         }
 
         $count = $this->getModel()->whereIn('id', $ids)->update([$column => $newValue]);
@@ -221,17 +223,17 @@ trait CurdTrait
      * @param $column
      * @param array $values
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xToggleColumn($id, $column, $values = [1, 2])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
-            throw new \Exception('数据不存在', 4010);
+            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
         if (count($values) != 2) {
-            throw new \Exception('参数异常', 4000);
+            throw new ApiException('参数异常');
         }
 
         if ($row->$column == current($values)) {
@@ -250,7 +252,7 @@ trait CurdTrait
      *
      * @param $id
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xDelete($id)
     {
@@ -264,7 +266,7 @@ trait CurdTrait
      *
      * @param array|\Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function xBatchDelete($request)
     {
@@ -283,12 +285,12 @@ trait CurdTrait
      * 获取模型
      *
      * @return \Illuminate\Database\Eloquent\Model
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function getModel()
     {
         if (empty($this->model)) {
-            throw new \Exception('model 未定义', 4010);
+            throw new ApiException('model 未定义', ApiException::ERROR_NOT_FOUND);
         } else if (is_string($this->model)) {
             $this->model = new $this->model;
         }
@@ -301,7 +303,7 @@ trait CurdTrait
      * @param \Illuminate\Http\Request $request
      * @param bool $check
      * @return array
-     * @throws \Exception
+     * @throws ApiException
      */
     protected function getRequestParamIds($request, $check = true)
     {
@@ -309,7 +311,7 @@ trait CurdTrait
         $ids = empty($ids) ? [] : explode(',', $ids);
         $ids = array_filter($ids, 'is_numeric');
         if (!$ids && $check) {
-            throw new \Exception('参数错误',4000);
+            throw new ApiException('参数错误');
         }
         return $ids;
     }
