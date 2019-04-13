@@ -1,5 +1,7 @@
 # laravel-curd
 
+> 简单几行代码实现增删改接口
+
 ## 安装
 
 使用 Composer 安装:
