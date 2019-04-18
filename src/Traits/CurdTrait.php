@@ -102,8 +102,8 @@ trait CurdTrait
     /**
      * 详情接口
      *
-     * @param $id
-     * @param $loads
+     * @param int $id
+     * @param array $loads
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
@@ -124,22 +124,20 @@ trait CurdTrait
     /**
      * 修改的接口
      *
-     * @param $id
-     * @param $request
+     * @param int $id
+     * @param \Illuminate\Http\Request|array $new
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xUpdate($id, $request)
+    protected function xUpdate($id, $new)
     {
         $row = $this->getModel()->find($id);
         if (!$row) {
             throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
 
-        if ($request instanceof \Illuminate\Http\Request) {
-            $new = method_exists($request, 'correct') ? $request->correct() : $request->all();
-        } else {
-            $new = $request;
+        if ($new instanceof \Illuminate\Http\Request) {
+            $new = method_exists($new, 'correct') ? $new->correct() : $new->all();
         }
 
         if (!empty($new)) {
@@ -195,14 +193,14 @@ trait CurdTrait
     /**
      * 批量修改列
      *
-     * @param \Illuminate\Http\Request $request
      * @param string $column 修改的列
      * @param array $valueIn 取值范围
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    public function xBatchUpdateColumn(\Illuminate\Http\Request $request, $column, $valueIn = [])
+    public function xBatchUpdateColumn($column, $valueIn = [])
     {
+        $request = request();
         $ids = $this->getRequestParamIds($request, true);
 
         $newValue = $request->input($column, '');
@@ -219,8 +217,8 @@ trait CurdTrait
     /**
      * 列值切换
      *
-     * @param $id
-     * @param $column
+     * @param int $id
+     * @param string $column
      * @param array $values
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
@@ -264,21 +262,49 @@ trait CurdTrait
     /**
      * 批量删除
      *
-     * @param array|\Illuminate\Http\Request $request
+     * @param array|\Illuminate\Http\Request $ids
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xBatchDelete($request)
+    protected function xBatchDelete($ids)
     {
-        if ($request instanceof \Illuminate\Http\Request) {
-            $ids = $this->getRequestParamIds($request, true);
-        } else {
-            $ids = $request;
+        if ($ids instanceof \Illuminate\Http\Request) {
+            $ids = $this->getRequestParamIds($ids, true);
         }
 
         $count = $this->getModel()->whereIn('id', $ids)->delete();
 
         return $this->responseData($count);
+    }
+
+    /**
+     * 上传文件
+     *
+     * @param string $dir 保存的目录
+     * @param string $url url前缀
+     * @param string $input input name
+     * @return \Illuminate\Http\JsonResponse
+     * @throws ApiException
+     */
+    protected function xUploadFile($dir, $url, $input)
+    {
+        $request = request();
+        // 检查文件
+        if (!$request->files->has($input)) {
+            throw new ApiException('未上传文件');
+        }
+        $file = $request->file($input);
+        $ext = $file->getClientOriginalExtension();
+
+        $filename = date('His') . mt_rand(1111, 9999) . '.' . $ext;
+        $path = $url . '/' . $filename;
+
+        try {
+            $file->move($dir, $filename);
+            return $this->responseData($path);
+        } catch (\Exception $e) {
+            throw new ApiException('上传失败');
+        }
     }
 
     /**
