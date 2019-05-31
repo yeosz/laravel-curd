@@ -283,10 +283,11 @@ trait CurdTrait
      * @param string $dir 保存的目录
      * @param string $url url前缀
      * @param string $input input name
+     * @param array $extensions 扩展名类型
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xUploadFile($dir, $url, $input)
+    protected function xUploadFile($dir, $url, $input, $extensions = [])
     {
         $request = request();
         // 检查文件
@@ -295,6 +296,9 @@ trait CurdTrait
         }
         $file = $request->file($input);
         $ext = $file->getClientOriginalExtension();
+        if (!empty($extensions) && !in_array($ext, $extensions)) {
+            throw new ApiException('文件类型不合法');
+        }
 
         $filename = date('His') . mt_rand(1111, 9999) . '.' . $ext;
         $path = $url . '/' . $filename;
