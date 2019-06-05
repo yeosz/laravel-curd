@@ -343,12 +343,13 @@ trait CurdTrait
      *
      * @param \Illuminate\Http\Request $request
      * @param bool $check
+     * @param string $param
      * @return array
      * @throws ApiException
      */
-    protected function getRequestParamIds($request, $check = true)
+    protected function getRequestParamIds($request, $check = true, $param = 'ids')
     {
-        $ids = $request->input('ids', '');
+        $ids = $request->input($param, '');
         $ids = empty($ids) ? [] : explode(',', $ids);
         $ids = array_filter($ids, 'is_numeric');
         if (!$ids && $check) {
