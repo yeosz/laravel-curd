@@ -235,14 +235,14 @@ trait CurdTrait
         }
 
         if ($row->$column == current($values)) {
-            $new = [$column => end($values)];
+            $newValue = end($values);
         } else {
-            $new = [$column => current($values)];
+            $newValue = current($values);
         }
 
-        $row->update($new);
+        $row->update([$column => $newValue]);
 
-        return $this->responseSuccess('修改成功');
+        return $this->responseData($newValue);
     }
 
     /**
