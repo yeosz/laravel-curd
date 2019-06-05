@@ -284,10 +284,11 @@ trait CurdTrait
      * @param string $url url前缀
      * @param string $input input name
      * @param array $extensions 扩展名类型
+     * @param bool $originalName 原始文件名
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xUploadFile($dir, $url, $input, $extensions = [])
+    protected function xUploadFile($dir, $url, $input, $extensions = [], $originalName = false)
     {
         $request = request();
         // 检查文件
@@ -300,12 +301,22 @@ trait CurdTrait
             throw new ApiException('文件类型不合法');
         }
 
-        $filename = date('His') . mt_rand(1111, 9999) . '.' . $ext;
-        $path = $url . '/' . $filename;
-
+        if ($originalName) {
+            $filename = $file->getClientOriginalName();
+        } else {
+            $filename = date('His') . mt_rand(1111, 9999) . '.' . $ext;
+        }
+        $url = $url . '/' . $filename;
+        $filePath = $dir . '/' . $filename;
+        if (file_exists($filePath)) {
+            if (md5_file($filePath) == md5_file($file->path())) {
+                return $this->responseData($url);
+            }
+            throw new ApiException('文件名已经存在');
+        }
         try {
             $file->move($dir, $filename);
-            return $this->responseData($path);
+            return $this->responseData($url);
         } catch (\Exception $e) {
             throw new ApiException('上传失败');
         }
