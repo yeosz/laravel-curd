@@ -360,7 +360,11 @@ trait CurdTrait
     protected function getRequestParamIds($request, $check = true, $param = 'ids')
     {
         $ids = $request->input($param, '');
-        $ids = empty($ids) ? [] : explode(',', $ids);
+        if (empty($ids)) {
+            $ids = [];
+        } elseif (!is_array($ids)) {
+            $ids = explode(',', $ids);
+        }
         $ids = array_filter($ids, 'is_numeric');
         if (!$ids && $check) {
             throw new ApiException('参数错误');
