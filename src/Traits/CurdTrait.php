@@ -77,10 +77,11 @@ trait CurdTrait
      *
      * @param int $id
      * @param array $loads
+     * @param array $attributes
      * @return \Illuminate\View\View
      * @throws ApiException
      */
-    protected function xEdit($id, $loads = [])
+    protected function xEdit($id, $loads = [], $attributes = [])
     {
         $row = $this->getModel()->find($id);
 
@@ -90,8 +91,12 @@ trait CurdTrait
         if (empty($this->view['edit'])) {
             throw new ApiException('请配置模板');
         }
+
         foreach ($loads as $load) {
             $row->load($load);
+        }
+        foreach ($attributes as $attribute) {
+            $row->setAttribute($attribute, $row->$attribute);
         }
 
         $this->assign['row'] = $row;
@@ -104,18 +109,23 @@ trait CurdTrait
      *
      * @param int $id
      * @param array $loads
+     * @param array $attributes
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xShow($id, $loads = [])
+    protected function xShow($id, $loads = [], $attributes = [])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
             throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
+
         foreach ($loads as $load) {
             $row->load($load);
+        }
+        foreach ($attributes as $attribute) {
+            $row->setAttribute($attribute, $row->$attribute);
         }
 
         return $this->responseData($row);
