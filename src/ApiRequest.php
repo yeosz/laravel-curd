@@ -9,6 +9,7 @@ class ApiRequest extends FormRequest
 {
     /**
      * 过滤
+     * 一维数组,或路由名作key多维数组,或者混合数组
      *
      * @var array
      */
@@ -57,8 +58,15 @@ class ApiRequest extends FormRequest
      */
     public function correct($arr = null)
     {
+        $routeName = $this->route()->getName();
+
         if (is_null($arr)) {
-            $arr = empty($this->only) ? $this->all() : $this->only($this->only);
+            if (!empty($routeName) && isset($this->only[$routeName])) {
+                $only = $this->only[$routeName];
+            } else {
+                $only = array_filter($this->only, 'is_string');
+            }
+            $arr = empty($only) ? $this->all() : $this->only($only);
         }
 
         foreach ($this->correct as $value) {
