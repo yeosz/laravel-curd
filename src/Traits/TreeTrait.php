@@ -13,14 +13,16 @@ trait TreeTrait
      *
      * @param string $parentColumn 父级字段
      * @param string $sortColumn 排序的字段
-     * @param string $model 模型
+     * @param string $query
      * @return array
      */
-    protected function getTreeList($parentColumn, $sortColumn, $model)
+    protected function getTreeList($parentColumn, $sortColumn, $query)
     {
-        $model = new $model;
+        if (is_string($query)) {
+            $query = new $query;
+        }
 
-        $trees = $model->orderBy($parentColumn, 'asc')
+        $trees = $query->orderBy($parentColumn, 'asc')
             ->orderBy($sortColumn, 'asc')
             ->get();
 
