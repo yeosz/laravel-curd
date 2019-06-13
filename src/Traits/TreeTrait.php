@@ -26,6 +26,13 @@ trait TreeTrait
             ->orderBy($sortColumn, 'asc')
             ->get();
 
+        if ($start = strrpos($parentColumn, '.')) {
+            $parentColumn = substr($parentColumn, $start + 1); // 处理表名如:a.parent_id
+        }
+        if ($start = strrpos($sortColumn, '.')) {
+            $sortColumn = substr($sortColumn, $start + 1); // 处理表名如:a.parent_id
+        }
+
         $tree = $this->treeSort($trees->toArray(), 'id', $parentColumn, $sortColumn, 'index_path');
 
         return $tree;
@@ -34,21 +41,24 @@ trait TreeTrait
     /**
      * 获取某节点的所有子节点ID
      *
-     * @param string $model 模型
+     * @param string $query 模型
      * @param int $nodeId 节点ID
      * @param string $parentColumn 父级字段
      * @param bool $contain 是否包括当前元素
      * @return array
      */
-    protected function getSubNodeIds($model, $nodeId, $parentColumn = 'parent_id', $contain = true)
+    protected function getSubNodeIds($query, $nodeId, $parentColumn = 'parent_id', $contain = true)
     {
-        if (is_string($model)) {
-            $model = new $model;
+        if (is_string($query)) {
+            $query = new $query;
         }
 
-        /** @var \Illuminate\Database\Eloquent\Model $model */
-        $trees = $model->orderBy($parentColumn, 'asc')->get();
+        /** @var \Illuminate\Database\Eloquent\Model $query */
+        $trees = $query->orderBy($parentColumn, 'asc')->get();
 
+        if ($start = strrpos($parentColumn, '.')) {
+            $parentColumn = substr($parentColumn, $start + 1); // 处理表名如:a.parent_id
+        }
         $tree = $this->treeSort($trees->toArray(), 'id', $parentColumn, 'id', 'index_path');
 
         $children = [$nodeId];
@@ -75,7 +85,7 @@ trait TreeTrait
      * @param string $treeDepth 表示深度的字段
      * @return array
      */
-    private function treeSort($arr, $idField, $pidField, $sortField, $pathKey = 'index_path', $treeDepth = 'tree_depth')
+    protected function treeSort($arr, $idField, $pidField, $sortField, $pathKey = 'index_path', $treeDepth = 'tree_depth')
     {
         $getIndexPath = function ($row, $data) use (&$getIndexPath, $idField, $pidField, $pathKey) {
             if ($row[$pidField] == 0) return '0' . '.' . $row[$idField];
