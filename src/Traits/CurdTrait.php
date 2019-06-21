@@ -66,6 +66,7 @@ trait CurdTrait
             $new = $request;
         }
 
+        $new = $this->appendOperator('create', $new);
         $row = $this->getModel()->create($new);
         $id = empty($row->id) ? 0 : $row->id;
 
@@ -151,6 +152,7 @@ trait CurdTrait
         }
 
         if (!empty($new)) {
+            $new = $this->appendOperator('update', $new);
             $row->update($new);
         }
 
@@ -191,8 +193,10 @@ trait CurdTrait
             throw new ApiException('参数不合法', ApiException::ERROR_NOT_FOUND);
         }
 
+        $new = $this->appendOperator('update', [$column => $value]);
+
         try {
-            $row->update([$column => $value]);
+            $row->update($new);
         } catch (\Exception $e) {
             throw new ApiException($e->getMessage());
         }
@@ -219,7 +223,8 @@ trait CurdTrait
             throw new ApiException('参数错误');
         }
 
-        $count = $this->getModel()->whereIn('id', $ids)->update([$column => $newValue]);
+        $new = $this->appendOperator('update', [$column => $newValue]);
+        $count = $this->getModel()->whereIn('id', $ids)->update($new);
 
         return $this->responseData($count);
     }
@@ -250,7 +255,8 @@ trait CurdTrait
             $newValue = current($values);
         }
 
-        $row->update([$column => $newValue]);
+        $new = $this->appendOperator('update', [$column => $newValue]);
+        $row->update($new);
 
         return $this->responseData($newValue);
     }
@@ -264,7 +270,7 @@ trait CurdTrait
      */
     protected function xDelete($id)
     {
-        $count = $this->getModel()->where('id', $id)->delete();
+        $count = $this->xExecuteDelete([$id]);
 
         return $this->responseData($count, '删除成功');
     }
@@ -282,9 +288,31 @@ trait CurdTrait
             $ids = $this->getRequestParamIds($ids, true);
         }
 
-        $count = $this->getModel()->whereIn('id', $ids)->delete();
+        $count = $this->xExecuteDelete($ids);
 
         return $this->responseData($count);
+    }
+
+    /**
+     * 执行删除操作
+     *
+     * @param array $ids
+     * @return bool
+     * @throws ApiException
+     */
+    protected function xExecuteDelete($ids = [])
+    {
+        $model = $this->getModel();
+        if (property_exists($model, 'forceDeleting')) {
+            // 软删除
+            $new = [
+                $model::getModel()->getDeletedAtColumn() => $model->getModel()->freshTimestampString(),
+            ];
+            $new = $this->appendOperator('delete', $new);
+            return $model->whereIn('id', $ids)->update($new);
+        } else {
+            return $this->getModel()->whereIn('id', $ids)->delete();
+        }
     }
 
     /**
@@ -370,5 +398,41 @@ trait CurdTrait
             throw new ApiException('参数错误');
         }
         return $ids;
+    }
+
+    /**
+     * 追加操作人
+     *
+     * @param $action
+     * @param $new
+     * @return mixed
+     * @throws ApiException
+     */
+    protected function appendOperator($action, $new)
+    {
+        $uid = request()->user()->id ? request()->user()->id : 0;
+        if (!$uid) {
+            return $new;
+        }
+        $model = $this->getModel();
+        $class = get_class($model);
+        switch ($action) {
+            case 'create':
+                if (defined($class . '::CREATED_BY')) {
+                    $new[$class::CREATED_BY] = $uid;
+                }
+                break;
+            case 'update':
+                if (defined($class . '::UPDATED_BY')) {
+                    $new[$class::UPDATED_BY] = $uid;
+                }
+                break;
+            case 'delete':
+                if (defined($class . '::DELETED_BY')) {
+                    $new[$class::DELETED_BY] = $uid;
+                }
+                break;
+        }
+        return $new;
     }
 }
