@@ -334,6 +334,10 @@ trait CurdTrait
             throw new ApiException('未上传文件');
         }
         $file = $request->file($input);
+        if (is_array($file)) {
+            $file = current($file);
+        }
+
         $ext = $file->getClientOriginalExtension();
         if (!empty($extensions) && !in_array($ext, $extensions)) {
             throw new ApiException('文件类型不合法');
