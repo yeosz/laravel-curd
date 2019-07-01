@@ -7,6 +7,7 @@
 namespace Yeosz\LaravelCurd\Traits;
 
 use Yeosz\LaravelCurd\ApiException;
+use Illuminate\Support\Facades\View as XView;
 
 trait CurdTrait
 {
@@ -35,7 +36,7 @@ trait CurdTrait
      *
      * @var array
      */
-    public $assign = [];
+    private $xAssign = [];
 
     /**
      * 新增页
@@ -48,7 +49,7 @@ trait CurdTrait
         if (empty($this->view['create'])) {
             throw new ApiException('请配置模板');
         } else {
-            return view($this->view['create'], $this->assign);
+            return $this->xView($this->view['create']);
         }
     }
 
@@ -100,9 +101,7 @@ trait CurdTrait
             $row->setAttribute($attribute, $row->$attribute);
         }
 
-        $this->assign['row'] = $row;
-
-        return view($this->view['edit'], $this->assign);
+        return $this->xView('row', $row)->xView($this->view['edit']);
     }
 
     /**
@@ -362,6 +361,36 @@ trait CurdTrait
         } catch (\Exception $e) {
             throw new ApiException('上传失败');
         }
+    }
+
+    /**
+     * 视图及赋值
+     *
+     * @param null $key
+     * @param null $value
+     * @param null|boolean $share
+     * @return $this|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @throws \Exception
+     * @description 使用方法如下
+     * $this->xView($template);
+     * $this->xView($key, $data);
+     * $this->xView($key, $data, true);
+     * $this->xView($array);
+     */
+    protected function xView($key = null, $value = null, $share = null)
+    {
+        if (is_string($key) && is_null($value) && is_null($share)) {
+            return view($key, $this->xAssign);
+        } elseif (is_string($key) && $share === true) {
+            XView::share($key, $value);
+        } elseif (is_string($key)) {
+            $this->xAssign[$key] = $value;
+        } elseif (is_array($key) && is_null($value) && empty($share)) {
+            $this->xAssign = array_merge($this->xAssign, $key);
+        } else {
+            throw new \Exception('参数异常');
+        }
+        return $this;
     }
 
     /**
