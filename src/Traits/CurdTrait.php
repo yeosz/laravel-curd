@@ -373,13 +373,13 @@ trait CurdTrait
      * @throws \Exception
      * @description 使用方法如下
      * $this->xView($template);
-     * $this->xView($key, $data);
+     * $this->xView($key, $data, false);
      * $this->xView($key, $data, true);
      * $this->xView($array);
      */
     protected function xView($key = null, $value = null, $share = null)
     {
-        if (is_string($key) && is_null($value) && is_null($share)) {
+        if (is_string($key) && is_null($value) && is_null($share) && XView::exists($key)) {
             return view($key, $this->xAssign);
         } elseif (is_string($key) && $share === true) {
             XView::share($key, $value);
