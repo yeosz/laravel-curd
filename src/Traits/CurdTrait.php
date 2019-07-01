@@ -180,7 +180,7 @@ trait CurdTrait
         if (!is_array($new) || empty($new)) {
             throw new ApiException('参数异常', ApiException::ERROR_NOT_FOUND);
         }
-        if (!empty($new['name']) && !empty($new['value'])) {
+        if (!empty($new['name']) && isset($new['value'])) {
             $column = $new['name'];
             $value = $new['value'];
         } else {

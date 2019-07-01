@@ -107,9 +107,7 @@ class ApiRequest extends FormRequest
     public function xEditableRules($rules)
     {
         if ($this->has(['pk', 'name', 'value'])) {
-            return [
-                'value' => $rules[$this->name]
-            ];
+            return empty($rules[$this->name]) ? [] : ['value' => $rules[$this->name]];
         } else {
             return $rules;
         }
