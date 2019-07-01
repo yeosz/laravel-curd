@@ -26,6 +26,9 @@ class ApiRequest extends FormRequest
 //        ['test', 'implode'], // 逗号连接
 //        ['empty', 'unset'], // 空值就删除
 //        ['password', 'password'], // bcrypt
+//        ['alpha', 'strtolower'], // 转小写
+//        ['alpha', 'strtoupper'], // 转大写
+//        ['alpha', 'correctTest'], // 自定义处理方法,方法名必须correct开头
     ];
 
     /**
@@ -84,6 +87,12 @@ class ApiRequest extends FormRequest
                 $arr[$key] = implode(',', $arr[$key]);
             } elseif ($item == 'unset' && empty($arr[$key])) {
                 unset($arr[$key]);
+            } elseif ($item == 'strtolower' && is_string($arr[$key])) {
+                $arr[$key] = strtolower($arr[$key]);
+            } elseif ($item == 'strtoupper' && is_string($arr[$key])) {
+                $arr[$key] = strtoupper($arr[$key]);
+            } elseif (stripos($item, 'correct') === 0) {
+                $arr[$key] = $this->$item($arr[$key], $arr);
             }
         }
         return $arr;
