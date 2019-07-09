@@ -42,12 +42,12 @@ trait CurdTrait
      * 新增页
      *
      * @return \Illuminate\View\View
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function xCreate()
     {
         if (empty($this->view['create'])) {
-            throw new ApiException('请配置模板');
+            throw new \Exception('请配置模板', 404);
         } else {
             return $this->xView($this->view['create']);
         }
@@ -81,17 +81,17 @@ trait CurdTrait
      * @param array $loads
      * @param array $attributes
      * @return \Illuminate\View\View
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function xEdit($id, $loads = [], $attributes = [])
     {
         $row = $this->getModel()->find($id);
 
         if (!$row) {
-            throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
+            throw new \Exception('数据不存在', 404);
         }
         if (empty($this->view['edit'])) {
-            throw new ApiException('请配置模板');
+            throw new \Exception('请配置模板', 404);
         }
 
         foreach ($loads as $load) {
@@ -397,12 +397,12 @@ trait CurdTrait
      * 获取模型
      *
      * @return \Illuminate\Database\Eloquent\Model
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function getModel()
     {
         if (empty($this->model)) {
-            throw new ApiException('model 未定义', ApiException::ERROR_NOT_FOUND);
+            throw new \Exception('model 未定义');
         } else if (is_string($this->model)) {
             $this->model = new $this->model;
         }
@@ -416,7 +416,7 @@ trait CurdTrait
      * @param bool $check
      * @param string $param
      * @return array
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function getRequestParamIds($request, $check = true, $param = 'ids')
     {
@@ -428,7 +428,7 @@ trait CurdTrait
         }
         $ids = array_filter($ids, 'is_numeric');
         if (!$ids && $check) {
-            throw new ApiException('参数错误');
+            throw new \Exception('参数错误');
         }
         return $ids;
     }
