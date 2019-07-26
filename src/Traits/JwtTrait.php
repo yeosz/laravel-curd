@@ -31,19 +31,21 @@ use JWTAuth;
  */
 trait JwtTrait
 {
-    /**
-     * @var string
-     */
+    use ResponseTrait;
+
+//    /**
+//     * @var string
+//     */
 //    protected $issuer = 'api.login';
 
-    /**
-     * @var string
-     */
+//    /**
+//     * @var string
+//     */
 //    protected $guard = 'api'; // config下auth中定义的guards
 
-    /**
-     * @var array
-     */
+//    /**
+//     * @var array
+//     */
 //    protected $credentials = ['username', 'password']; // 登录请求的参数
 
     /**
@@ -60,13 +62,13 @@ trait JwtTrait
         if ($token) {
             try {
                 $this->checkLoginUser($guard->user());
-                return $this->response(200, 'success', $token);
+                return $this->responseData($token);
             } catch (\Exception $e) {
-                return $this->response($e->getCode(), $e->getMessage());
+                return $this->responseError($e->getCode(), $e->getMessage());
             }
         }
 
-        return $this->response(4000, 'Unauthorized');
+        return $this->responseError(4000, 'Unauthorized');
     }
 
     /**
@@ -78,7 +80,7 @@ trait JwtTrait
     {
         $this->guard()->logout();
 
-        return $this->response(200);
+        return $this->responseSuccess();
     }
 
     /**
@@ -90,9 +92,9 @@ trait JwtTrait
     {
         try {
             $this->checkLoginUser($this->guard()->user());
-            return $this->response(200, 'success', $this->guard()->refresh());
+            return $this->responseData($this->guard()->refresh());
         } catch (\Exception $e) {
-            return $this->response($e->getCode(), $e->getMessage());
+            return $this->responseError($e->getCode(), $e->getMessage());
         }
     }
 
@@ -103,7 +105,7 @@ trait JwtTrait
      */
     public function profile()
     {
-        return $this->response(200, 'success', $this->guard()->user());
+        return $this->responseData($this->guard()->user());
     }
 
     /**
@@ -119,40 +121,23 @@ trait JwtTrait
         try {
             $issuer = $this->getIssuer();
             if (!JWTAuth::parseToken()->check()) {
-                return $this->response(ApiException::ERROR_NOT_LOGIN, '尚未登录或登录状态已超时');
+                return $this->responseError(ApiException::ERROR_NOT_LOGIN, '尚未登录或登录状态已超时');
             } else {
                 $payload = JWTAuth::getPayload()->toArray();
                 $checked = is_array($issuer) ? in_array($payload['iss'], $issuer) : $payload['iss'] == $issuer;
                 if (!$checked) {
-                    return $this->response(ApiException::ERROR_UNKNOWN, '令牌无效');
+                    return $this->responseError(ApiException::ERROR_UNKNOWN, '令牌无效');
                 }
             }
         } catch (TokenExpiredException $e) {
-            return $this->response(ApiException::ERROR_TOKEN_EXPIRE, '令牌已过期');
+            return $this->responseError(ApiException::ERROR_TOKEN_EXPIRE, '令牌已过期');
         } catch (TokenInvalidException $e) {
-            return $this->response(ApiException::ERROR_TOKEN_INVALID, '令牌无效');
+            return $this->responseError(ApiException::ERROR_TOKEN_INVALID, '令牌无效');
         } catch (JWTException $e) {
-            return $this->response(ApiException::ERROR_TOKEN_BAD, '令牌错误');
+            return $this->responseError(ApiException::ERROR_TOKEN_BAD, '令牌错误');
         }
 
         return $next($request);
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param $code
-     * @param $message
-     * @param $data
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function response($code = 200, $message = 'success', $data = null)
-    {
-        return response()->json([
-            'code' => $code,
-            'message' => $message,
-            'data' => $data,
-        ]);
     }
 
     /**

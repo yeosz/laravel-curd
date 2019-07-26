@@ -443,7 +443,8 @@ trait CurdTrait
      */
     protected function appendOperator($action, $new)
     {
-        $uid = request()->user()->id ? request()->user()->id : 0;
+        $guard = empty($this->guard) ? '' : $this->guard;
+        $uid = request()->user($guard) ? request()->user($guard)->id : 0;
         if (!$uid) {
             return $new;
         }

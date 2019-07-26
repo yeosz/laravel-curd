@@ -3,9 +3,12 @@
 namespace Yeosz\LaravelCurd;
 
 use \Exception;
+use Yeosz\LaravelCurd\Traits\ResponseTrait;
 
 class ApiException extends Exception
 {
+    use ResponseTrait;
+
     /**
      * @var int 成功（无错误）
      */
@@ -105,9 +108,9 @@ class ApiException extends Exception
     public function render()
     {
         if (is_null($this->data)) {
-            return response()->json(['code' => $this->code, 'message' => $this->message]);
+            return $this->responseError($this->code, $this->message);
         } else {
-            return response()->json(['code' => $this->code, 'message' => $this->message, 'data' => $this->data]);
+            return $this->responseData($this->data, $this->message, $this->code);
         }
     }
 }

@@ -37,11 +37,16 @@ trait ResponseTrait
      *
      * @param string|int|double $data 要返回的数据
      * @param string $message 要返回的提示信息
+     * @param int $code
+     * @param array $extend
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function responseData($data, $message = '操作成功')
+    protected function responseData($data, $message = '操作成功', $code = 200, $extend = [])
     {
-        $data = ['code' => 200, 'message' => $message, 'data' => $data];
+        $data = ['code' => $code, 'message' => $message, 'data' => $data];
+        if ($extend) {
+            $data = array_merge($extend, $data);
+        }
         return $this->createResponse($data);
     }
 
