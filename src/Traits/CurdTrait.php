@@ -56,10 +56,12 @@ trait CurdTrait
     /**
      * 保存
      *
-     * @param \Illuminate\Http\Request|array $request
+     * @param $request
+     * @param \Closure|null $closure
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
-    protected function xStore($request)
+    protected function xStore($request, \Closure $closure = null)
     {
         if ($request instanceof \Illuminate\Http\Request) {
             $new = method_exists($request, 'correct') ? $request->correct() : $request->all();
@@ -68,9 +70,22 @@ trait CurdTrait
         }
 
         $new = $this->appendOperator('create', $new);
-        $row = $this->getModel()->create($new);
-        $id = empty($row->id) ? 0 : $row->id;
 
+        if (!is_null($closure)) {
+            \DB::beginTransaction();
+            try {
+                $row = $this->getModel()->create($new);
+                $closure($row);
+                \DB::commit();
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                return $this->responseError(ApiException::ERROR_UNKNOWN, $e->getMessage());
+            }
+        } else {
+            $row = $this->getModel()->create($new);
+        }
+
+        $id = empty($row->id) ? 0 : $row->id;
         return $this->responseData($id);
     }
 
@@ -134,12 +149,13 @@ trait CurdTrait
     /**
      * 修改的接口
      *
-     * @param int $id
-     * @param \Illuminate\Http\Request|array $new
+     * @param $id
+     * @param $new
+     * @param \Closure|null $closure
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xUpdate($id, $new)
+    protected function xUpdate($id, $new, \Closure $closure = null)
     {
         $row = $this->getModel()->find($id);
         if (!$row) {
@@ -152,7 +168,20 @@ trait CurdTrait
 
         if (!empty($new)) {
             $new = $this->appendOperator('update', $new);
-            $row->update($new);
+
+            if (!is_null($closure)) {
+                \DB::beginTransaction();
+                try {
+                    $row->update($new);
+                    $closure($row);
+                    \DB::commit();
+                } catch (\Exception $e) {
+                    \DB::rollBack();
+                    return $this->responseError(ApiException::ERROR_UNKNOWN, $e->getMessage());
+                }
+            } else {
+                $row->update($new);
+            }
         }
 
         return $this->responseSuccess();
@@ -265,7 +294,7 @@ trait CurdTrait
      *
      * @param $id
      * @return \Illuminate\Http\JsonResponse
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function xDelete($id)
     {
@@ -279,7 +308,7 @@ trait CurdTrait
      *
      * @param array|\Illuminate\Http\Request $ids
      * @return \Illuminate\Http\JsonResponse
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function xBatchDelete($ids)
     {
@@ -297,7 +326,7 @@ trait CurdTrait
      *
      * @param array $ids
      * @return bool
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function xExecuteDelete($ids = [])
     {
@@ -364,24 +393,36 @@ trait CurdTrait
     }
 
     /**
-     * 视图及赋值
+     * 视图
+     *
+     * @param string $template
+     * @param array $data
+     * @param array $mergeData
+     * @return \Illuminate\View\View|\Illuminate\Contracts\View\Factory
+     */
+    protected function xView(string $template, array $data = [], array $mergeData = [])
+    {
+        if ($data) {
+            $this->xAssign = array_merge($this->xAssign, $data);
+        }
+        if ($mergeData) {
+            $this->xAssign = array_merge($this->xAssign, $mergeData);
+        }
+        return view($template, $this->xAssign);
+    }
+
+    /**
+     * 赋值
      *
      * @param null $key
      * @param null $value
-     * @param null|boolean $share
-     * @return $this|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @param null $share
+     * @return $this
      * @throws \Exception
-     * @description 使用方法如下
-     * $this->xView($template);
-     * $this->xView($key, $data, false);
-     * $this->xView($key, $data, true);
-     * $this->xView($array);
      */
-    protected function xView($key = null, $value = null, $share = null)
+    protected function xAssign($key = null, $value = null, $share = null)
     {
-        if (is_string($key) && is_null($value) && is_null($share) && XView::exists($key)) {
-            return view($key, $this->xAssign);
-        } elseif (is_string($key) && $share === true) {
+        if (is_string($key) && $share === true) {
             XView::share($key, $value);
         } elseif (is_string($key)) {
             $this->xAssign[$key] = $value;
@@ -439,7 +480,7 @@ trait CurdTrait
      * @param $action
      * @param $new
      * @return mixed
-     * @throws ApiException
+     * @throws \Exception
      */
     protected function appendOperator($action, $new)
     {

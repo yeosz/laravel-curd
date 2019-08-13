@@ -35,7 +35,7 @@ trait ResponseTrait
     /**
      * 返回数据
      *
-     * @param string|int|double $data 要返回的数据
+     * @param mixed $data 要返回的数据
      * @param string $message 要返回的提示信息
      * @param int $code
      * @param array $extend
