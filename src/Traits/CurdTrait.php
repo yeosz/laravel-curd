@@ -116,7 +116,7 @@ trait CurdTrait
             $row->setAttribute($attribute, $row->$attribute);
         }
 
-        return $this->xView('row', $row)->xView($this->view['edit']);
+        return $this->xAssign('row', $row)->xView($this->view['edit']);
     }
 
     /**
