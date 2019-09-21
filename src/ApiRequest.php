@@ -112,4 +112,27 @@ class ApiRequest extends FormRequest
             return $rules;
         }
     }
+
+    /**
+     * 获取数组
+     *
+     * @param $name
+     * @param null $default
+     * @return array|mixed|string|null
+     * @throws \Exception
+     */
+    public function inputArray($name, $default = null)
+    {
+        $param = $this->input($name, $default);
+        if (is_string($param)) {
+            $param = json_decode($param, true);
+            if (json_last_error()) {
+                throw new \Exception("{$name}格式不正确");
+            }
+        }
+        if (!is_array($param) && !is_null($param)) {
+            throw new \Exception("{$name}格式不正确");
+        }
+        return $param;
+    }
 }

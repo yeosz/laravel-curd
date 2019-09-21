@@ -22,6 +22,11 @@ trait CurdTrait
 //    protected static $model = '';
 //
 //    /**
+//     * @var string auth guard 获取用户 appendOperator方法使用
+//     */
+//    protected $guard = '';
+//
+//    /**
 //     * 模板
 //     *
 //     * @var array
