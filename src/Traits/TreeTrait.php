@@ -146,7 +146,7 @@ trait TreeTrait
         foreach ($list as $key => $data) {
             // 判断是否存在parent
             $parentId = $data[$pid];
-            if ($root == $parentId) {
+            if ($root === $parentId || (empty($root) && empty($parentId))) {
                 $tree[] =& $list[$key];
             } else {
                 if (isset($refer[$parentId])) {
