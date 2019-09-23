@@ -372,6 +372,7 @@ trait CurdTrait
         }
 
         $ext = $file->getClientOriginalExtension();
+        $ext = strtolower($ext);
         if (!empty($extensions) && !in_array($ext, $extensions)) {
             throw new ApiException('文件类型不合法');
         }
