@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder as EBuilder;
 use Illuminate\Http\Request;
 
 /**
- * Class Q
+ * Class Query
  * @package App\Services
  *
  * @method Q orWhere($column, $operator = null, $value = null)
@@ -24,7 +24,7 @@ use Illuminate\Http\Request;
  * @method \Illuminate\Support\Collection pluck($column, $key = null)
  * @method string toSql()
  */
-class Q
+class Query
 {
     const METHODS = [
         [
@@ -90,6 +90,64 @@ class Q
             $this->xOrderBy();
         }
         return $this;
+    }
+
+    /**
+     * 合计
+     * 支持的函数有COUNT,MAX,AVG,MIN,MAX,SUM,GROUP_CONCAT
+     *
+     * @param Illuminate\Contracts\Pagination\LengthAwarePaginator|Illuminate\Support\Collection $list
+     * @param EBuilder|Builder $query 查询
+     * @param array $columns 字段 $totalFields = ['count1' => 'count','table.f1','MIN(table.f2)']
+     * @param string $foreignKey 外键
+     * @param string $localKey 主键
+     * @return mixed
+     */
+    public static function total($list, $query, $columns, $foreignKey, $localKey)
+    {
+        $getColumn = function ($column, $as) {
+            if (is_numeric($as)) {
+                $start = strpos($column, '.') + 1;
+                if ($start > 1) {
+                    $as = substr($column, $start);
+                }
+                $as = trim($as, ')');
+            }
+            $start = strpos($column, '(');
+            if ($start > 0) {
+                $func = strtoupper(substr($column, 0, $start));
+                $field = DB::raw("{$column} AS {$as}");
+            } else {
+                $func = 'SUM';
+                $field = DB::raw("SUM({$column}) AS {$as}");
+            }
+            $default = $func == 'GROUP_CONCAT' ? '' : '0';
+            return [$field, $as, $default];
+        };
+        $fields = [$foreignKey];
+        foreach ($columns as $key => $column) {
+            $result = $getColumn($column, $key);
+            $fields[] = $result[0];
+            $columns[$key] = $result;
+        }
+
+        $keyBy = $getColumn($foreignKey, 0);
+        $keyBy = $keyBy[1];
+        $ids = $list->pluck($localKey)->toArray();
+        $details = $query->whereIn($foreignKey, $ids)->groupBy($foreignKey)->get($fields)->keyBy($keyBy);
+        foreach ($list as $item) {
+            $total = $details[$item->{$localKey}] ?? null;
+            foreach ($columns as $key => $column) {
+                $field = $column[1];
+                if (is_null($total)) {
+                    $item->{$field} = $columns[$key][2];
+                } else {
+                    $item->{$field} = $total->{$field};
+                }
+            }
+        }
+
+        return $list;
     }
 
     /**
