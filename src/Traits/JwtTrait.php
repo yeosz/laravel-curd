@@ -70,7 +70,7 @@ trait JwtTrait
             }
         }
 
-        return $this->responseError(4000, 'Unauthorized');
+        return $this->responseError(ApiException::ERROR_LOGIN_FAILED, '登录失败，帐号或密码错误');
     }
 
     /**
