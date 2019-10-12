@@ -21,11 +21,13 @@ use JWTAuth;
  * Class JwtTrait
  *
  * @desc
+ * 安装jwt,配置config/auth文件,配置模型
  * 1.控制器用法
  * 定义属性$issuer,$guard,$credentials
  * 可重写checkLoginUser方法,增加验证逻辑,或者重写login方法
  * 2.中间件用法
  * 定义属性$issuer,handle方法代码:return $this->jwtHandle($request, $next);
+ * 添加中间件到app/Http/Kernel.php
  *
  * @package Yeosz\LaravelCurd\Traits
  */
