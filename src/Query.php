@@ -166,12 +166,21 @@ class Query
             $column = empty($column) ? $key : $column;
             /** @var EBuilder $query */
             if (is_array($column)) {
-                $query->where(function ($query) use ($value, $column, $operator, $and) {
-                    /** @var EBuilder $query */
-                    foreach ($column as $item) {
-                        $query = $this->queryWhere($query, $item, $operator, $value, $and);
-                    }
-                });
+                if ($and) {
+                    $query->where(function ($query) use ($value, $column, $operator) {
+                        /** @var EBuilder $query */
+                        foreach ($column as $item) {
+                            $query = $this->queryWhere($query, $item, $operator, $value, false);
+                        }
+                    });
+                } else {
+                    $query->orWhere(function ($query) use ($value, $column, $operator) {
+                        /** @var EBuilder $query */
+                        foreach ($column as $item) {
+                            $query = $this->queryWhere($query, $item, $operator, $value, false);
+                        }
+                    });
+                }
             } else {
                 $query = $this->queryWhere($query, $column, $operator, $value, $and);
             }
@@ -201,12 +210,21 @@ class Query
             }
             $value = $query->pluck($table[2])->toArray();
             if (is_array($column)) {
-                $this->query->where(function ($query) use ($value, $column, $and) {
-                    /** @var EBuilder $query */
-                    foreach ($column as $item) {
-                        $query = $this->queryWhere($query, $item, 'in', $value, $and);
-                    }
-                });
+                if ($and) {
+                    $this->query->where(function ($query) use ($value, $column) {
+                        /** @var EBuilder $query */
+                        foreach ($column as $item) {
+                            $query = $this->queryWhere($query, $item, 'in', $value, false);
+                        }
+                    });
+                } else {
+                    $this->query->orWhere(function ($query) use ($value, $column) {
+                        /** @var EBuilder $query */
+                        foreach ($column as $item) {
+                            $query = $this->queryWhere($query, $item, 'in', $value, false);
+                        }
+                    });
+                }
             } else {
                 $this->queryWhere($this->query, $column, 'in', $value, $and);
             }
