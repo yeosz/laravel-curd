@@ -79,7 +79,7 @@ trait CurdTrait
         if (!is_null($closure)) {
             \DB::beginTransaction();
             try {
-                $row = $this->getModel()->create($new);
+                $row = $this->model::create($new);
                 $closure($row);
                 \DB::commit();
             } catch (\Exception $e) {
@@ -87,7 +87,7 @@ trait CurdTrait
                 return $this->responseError(ApiException::ERROR_UNKNOWN, $e->getMessage());
             }
         } else {
-            $row = $this->getModel()->create($new);
+            $row = $this->model::create($new);
         }
 
         $id = empty($row->id) ? 0 : $row->id;
@@ -344,7 +344,7 @@ trait CurdTrait
             $new = $this->appendOperator('delete', $new);
             return $model->whereIn('id', $ids)->update($new);
         } else {
-            return $this->getModel()->whereIn('id', $ids)->delete();
+            return $model->whereIn('id', $ids)->delete();
         }
     }
 
@@ -495,8 +495,7 @@ trait CurdTrait
         if (!$uid) {
             return $new;
         }
-        $model = $this->getModel();
-        $class = get_class($model);
+        $class = $this->model;
         switch ($action) {
             case 'create':
                 if (defined($class . '::CREATED_BY')) {
