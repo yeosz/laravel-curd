@@ -10,15 +10,15 @@ use Illuminate\Http\Request;
  * Class Query
  * @package App\Services
  *
- * @method Q orWhere($column, $operator = null, $value = null)
- * @method Q where($column, $operator = null, $value = null, $boolean = 'and')
- * @method Q whereIn($column, $values, $boolean = 'and', $not = false)
- * @method Q whereRaw($sql, $bindings = [], $boolean = 'and')
- * @method Q orWhereRaw($sql, $bindings = [])
- * @method Q limit($value)
- * @method Q when($value, $callback, $default = null)
- * @method Q orderBy($column, $direction)
- * @method Q select($columns = array())
+ * @method $this orWhere($column, $operator = null, $value = null)
+ * @method $this where($column, $operator = null, $value = null, $boolean = 'and')
+ * @method $this whereIn($column, $values, $boolean = 'and', $not = false)
+ * @method $this whereRaw($sql, $bindings = [], $boolean = 'and')
+ * @method $this orWhereRaw($sql, $bindings = [])
+ * @method $this limit($value)
+ * @method $this when($value, $callback, $default = null)
+ * @method $this orderBy($column, $direction)
+ * @method $this select($columns = array())
  * @method \Illuminate\Contracts\Pagination\LengthAwarePaginator  paginate($perPage = null, $columns = array(), $pageName = 'page', $page = null)
  * @method \Illuminate\Database\Eloquent\Collection get($columns = array())
  * @method \Illuminate\Support\Collection pluck($column, $key = null)
@@ -166,21 +166,12 @@ class Query
             $column = empty($column) ? $key : $column;
             /** @var EBuilder $query */
             if (is_array($column)) {
-                if ($and) {
-                    $query->where(function ($query) use ($value, $column, $operator) {
-                        /** @var EBuilder $query */
-                        foreach ($column as $item) {
-                            $query = $this->queryWhere($query, $item, $operator, $value, false);
-                        }
-                    });
-                } else {
-                    $query->orWhere(function ($query) use ($value, $column, $operator) {
-                        /** @var EBuilder $query */
-                        foreach ($column as $item) {
-                            $query = $this->queryWhere($query, $item, $operator, $value, false);
-                        }
-                    });
-                }
+                $query->where(function ($query) use ($value, $column, $operator, $and) {
+                    /** @var EBuilder $query */
+                    foreach ($column as $item) {
+                        $query = $this->queryWhere($query, $item, $operator, $value, $and);
+                    }
+                });
             } else {
                 $query = $this->queryWhere($query, $column, $operator, $value, $and);
             }
@@ -210,21 +201,12 @@ class Query
             }
             $value = $query->pluck($table[2])->toArray();
             if (is_array($column)) {
-                if ($and) {
-                    $this->query->where(function ($query) use ($value, $column) {
-                        /** @var EBuilder $query */
-                        foreach ($column as $item) {
-                            $query = $this->queryWhere($query, $item, 'in', $value, false);
-                        }
-                    });
-                } else {
-                    $this->query->orWhere(function ($query) use ($value, $column) {
-                        /** @var EBuilder $query */
-                        foreach ($column as $item) {
-                            $query = $this->queryWhere($query, $item, 'in', $value, false);
-                        }
-                    });
-                }
+                $this->query->where(function ($query) use ($value, $column, $and) {
+                    /** @var EBuilder $query */
+                    foreach ($column as $item) {
+                        $query = $this->queryWhere($query, $item, 'in', $value, $and);
+                    }
+                });
             } else {
                 $this->queryWhere($this->query, $column, 'in', $value, $and);
             }
@@ -321,6 +303,10 @@ class Query
     {
         /** @var $query Builder|EBuilder */
         switch ($operator) {
+            case 'raw':
+                $str = sprintf($column, $value);
+                $query = $and ? $query->whereRaw($str) : $query->orWhereRaw($str);
+                break;
             case 'in':
                 $value = is_array($value) ? $value : explode(',', $value);
                 $query = $and ? $query->whereIn($column, $value) : $query->orWhereIn($column, $value);
