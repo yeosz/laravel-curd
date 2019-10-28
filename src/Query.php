@@ -304,8 +304,7 @@ class Query
         /** @var $query Builder|EBuilder */
         switch ($operator) {
             case 'raw':
-                $str = sprintf($column, $value);
-                $query = $and ? $query->whereRaw($str) : $query->orWhereRaw($str);
+                $query = $and ? $query->whereRaw($column, $value) : $query->orWhereRaw($column, $value);
                 break;
             case 'in':
                 $value = is_array($value) ? $value : explode(',', $value);
