@@ -103,7 +103,7 @@ trait CurdTrait
      * @return \Illuminate\View\View
      * @throws \Exception
      */
-    protected function xEdit($id, $loads = [], $attributes = [])
+    protected function xEdit($id, $loads = [], $attributes = [], \Closure $closure = null)
     {
         $row = $this->getModel()->find($id);
 
@@ -121,6 +121,10 @@ trait CurdTrait
             $row->setAttribute($attribute, $row->$attribute);
         }
 
+        if (!is_null($closure)) {
+            $closure($row);
+        }
+
         return $this->xAssign('row', $row)->xView($this->view['edit']);
     }
 
@@ -133,7 +137,7 @@ trait CurdTrait
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
-    protected function xShow($id, $loads = [], $attributes = [])
+    protected function xShow($id, $loads = [], $attributes = [], \Closure $closure = null)
     {
         $row = $this->getModel()->find($id);
 
@@ -146,6 +150,10 @@ trait CurdTrait
         }
         foreach ($attributes as $attribute) {
             $row->setAttribute($attribute, $row->$attribute);
+        }
+
+        if (!is_null($closure)) {
+            $closure($row);
         }
 
         return $this->responseData($row);
