@@ -17,7 +17,7 @@ use Closure;
  * @package Yeosz\LaravelCurd
  * @desctiption
  * 用法
- * (new Export)->setCollection($data)->setHeading(['name1'=>'标题1','name2'=>'标题2'])->download('export.xlsx')
+ * (new Export)->setCollection($data)->setHeadings(['name1'=>'标题1','name2'=>'标题2'])->download('export.xlsx')
  */
 class Export implements WithHeadings, WithEvents, FromArray
 {
