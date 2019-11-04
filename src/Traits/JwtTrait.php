@@ -8,6 +8,7 @@
 
 namespace Yeosz\LaravelCurd\Traits;
 
+use Tymon\JWTAuth\Contracts\JWTSubject;
 use Yeosz\LaravelCurd\ApiException;
 use Illuminate\Http\Request;
 use Auth;
@@ -53,7 +54,7 @@ trait JwtTrait
     /**
      * Get a JWT token via given credentials.
      *
-     * @param  \Illuminate\Http\Request $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request)
@@ -71,6 +72,23 @@ trait JwtTrait
         }
 
         return $this->responseError(ApiException::ERROR_LOGIN_FAILED, '登录失败，帐号或密码错误');
+    }
+
+    /**
+     *
+     *
+     * @param JWTSubject $user
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function userLogin(JWTSubject $user)
+    {
+        try {
+            $this->checkLoginUser($user);
+        } catch (\Exception $e) {
+            return $this->responseError($e->getCode(), $e->getMessage());
+        }
+        $token = \JWTAuth::customClaims(['iss' => $this->getIssuer()])->fromUser($user);
+        return $this->responseData($token);
     }
 
     /**
@@ -114,8 +132,8 @@ trait JwtTrait
      * Handle an incoming request.
      * 中间件handle方法
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function jwtHandle($request, Closure $next)
