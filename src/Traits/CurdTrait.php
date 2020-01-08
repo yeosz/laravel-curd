@@ -503,7 +503,7 @@ trait CurdTrait
         if (!$uid) {
             return $new;
         }
-        $class = $this->model;
+        $class = is_string($this->model) ? $this->model : get_class($this->model);
         switch ($action) {
             case 'create':
                 if (defined($class . '::CREATED_BY')) {
