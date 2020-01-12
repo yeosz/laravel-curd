@@ -27,18 +27,6 @@ trait KindEditorTrait
     public static $orderBy = 'size';
 
     /**
-     * 定义允许上传的文件扩展名
-     *
-     * @var array
-     */
-    protected $extNames = [
-        'image' => ['gif', 'jpg', 'jpeg', 'png', 'bmp'],
-        'flash' => ['swf', 'flv'],
-        'media' => ['swf', 'flv', 'mp3', 'mp4', 'wav', 'wma', 'wmv', 'mid', 'avi', 'mpg', 'asf', 'rm', 'rmvb'],
-        'file' => ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'htm', 'html', 'txt', 'zip', 'rar', 'gz', 'bz2', 'pdf'],
-    ];
-
-    /**
      * 上传
      *
      * @return array
@@ -46,15 +34,23 @@ trait KindEditorTrait
     public function upload()
     {
         $request = request();
+        $requestDir = $request->input('dir', 'file');
         if (!$request->files->has('file')) {
             return ['error' => 1, 'message' => '未上传文件'];
         }
+        // 校验扩展名是否合法
         $file = $request->file('file');
-        $fileType = $request->input('dir', 'file');
-        if (!in_array(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION), $this->extNames[$fileType])) {
+        $extension = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+        $allow = $this->getAllowExtensionName();
+        if (!isset($allow[$extension])) {
             return ['error' => 1, 'message' => '上传文件扩展名是不允许的扩展名'];
         }
-        $fileType = $fileType == 'image' ? 'images' : 'attachments';
+        // 校验扩展名与目录是否相符
+        $fileType = $allow[$extension];
+        $requestDir = $requestDir == 'flash' ? 'media' : $requestDir;
+        if (in_array($requestDir, ['image', 'media']) && $fileType != $requestDir) {
+            return ['error' => 1, 'message' => '上传文件扩展名是不允许的扩展名'];
+        }
 
         list($dir, $url) = $this->getFilePath($fileType, 1);
 
@@ -64,31 +60,38 @@ trait KindEditorTrait
             }
         }
 
-        if ($fileType == 'images') {
+        if ($fileType == 'image') {
             // 使用文件md5哈希值作为文件名
-            $filename = md5_file($file->path()) . '.' . strtolower($file->getClientOriginalExtension());
+            $filename = md5_file($file->path()) . '.' . $extension;
         } else {
             // 使用原始文件名
             $filename = strtolower($file->getClientOriginalName());
             // 检查是否已经存在同名文件，并且使用md5检查文件是否完全相同
             // 如果没有同名文件，则使用原始文件名保存，否则，在原始文件名后加上一个数字后缀保存
-            $path = $dir . $this->directorySeparator . $filename;
-            if (file_exists($path)) {
-                $oldFileHash = md5_file($path);
+            $fullPath = $dir . $this->directorySeparator . $filename;
+            if (file_exists($fullPath)) {
+                $oldFileHash = md5_file($fullPath);
                 $newFileHash = md5_file($file->path());
                 if ($newFileHash != $oldFileHash) {
-                    $path = $this->getAvailableFilename($path);
-                    $fileInfo = pathinfo($path);
-                    $filename = $fileInfo['basename'];
+                    $fullPath = $this->getAvailableFilename($fullPath);
+                    $filename = pathinfo($fullPath, PATHINFO_BASENAME);
                 }
             }
         }
 
         $file->move($dir, $filename);
-
         $url = $url . $filename;
-
-        return ['error' => 0, 'url' => $url];
+        $data = [
+            'error' => 0,
+            'url' => $url,
+            'type' => $fileType,
+            'path' => parse_url($url, PHP_URL_PATH),
+            'original_name' => $file->getClientOriginalName(),
+            'filename' => $filename,
+            'extension' => $extension,
+            'size' => $file->getSize(),
+        ];
+        return $data;
     }
 
     /**
@@ -101,10 +104,10 @@ trait KindEditorTrait
         $request = request();
         // 目录名
         $dirName = empty($request->input('dir')) ? '' : trim($request->input('dir'));
-        if (!in_array($dirName, ['', 'image', 'flash', 'media', 'file'])) {
+        if (!in_array($dirName, ['image', 'flash', 'media', 'file'])) {
             return 'Invalid Directory name';
         }
-        $fileType = $dirName == 'image' ? 'images' : 'attachments';
+        $fileType = $dirName == 'flash' ? 'media' : $dirName;
 
         list($dir, $rootUrl) = $this->getFilePath($fileType, 0);
 
@@ -271,5 +274,23 @@ trait KindEditorTrait
         $url = '/' . $url . '/';
 
         return [$dir, $url];
+    }
+
+    /**
+     * 扩展名级类型
+     *
+     * @return array
+     */
+    public function getAllowExtensionName()
+    {
+        return [
+            'gif' => 'image', 'jpg' => 'image', 'jpeg' => 'image', 'png' => 'image', 'bmp' => 'image',
+            'swf' => 'media', 'flv' => 'media', 'mp3' => 'media', 'mp4' => 'media', 'wav' => 'media',
+            'wma' => 'media', 'wmv' => 'media', 'mid' => 'media', 'avi' => 'media', 'mpg' => 'media',
+            'asf' => 'media', 'rm' => 'media', 'rmvb' => 'media',
+            'doc' => 'file', 'docx' => 'file', 'xls' => 'file', 'xlsx' => 'file', 'ppt' => 'file',
+            'htm' => 'file', 'html' => 'file', 'txt' => 'file', 'zip' => 'file', 'rar' => 'file',
+            'gz' => 'file', 'bz2' => 'file', 'pdf' => 'file', 'csv' => 'file',
+        ];
     }
 }

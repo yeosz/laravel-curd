@@ -19,7 +19,7 @@ trait CurdTrait
 //     *
 //     * @var string
 //     */
-//    protected static $model = '';
+//    protected $model = '';
 //
 //    /**
 //     * @var string auth guard 获取用户 appendOperator方法使用
@@ -31,7 +31,7 @@ trait CurdTrait
 //     *
 //     * @var array
 //     */
-//    protected static $view = [
+//    protected $view = [
 //        'add' => '',
 //        'edit' => '',
 //    ];
@@ -181,7 +181,6 @@ trait CurdTrait
 
         if (!empty($new)) {
             $new = $this->appendOperator('update', $new);
-
             if (!is_null($closure)) {
                 \DB::beginTransaction();
                 try {
@@ -359,51 +358,77 @@ trait CurdTrait
     /**
      * 上传文件
      *
+     * @param string $input input name
      * @param string $dir 保存的目录
      * @param string $url url前缀
-     * @param string $input input name
-     * @param array $extensions 扩展名类型
-     * @param bool $originalName 原始文件名
-     * @return \Illuminate\Http\JsonResponse
-     * @throws ApiException
+     * @param bool $rename 重命名
+     * @param array $extensions 检验扩展名 ['jpg'=>'image']
+     * @param string $type 校验文件类型 对应$extensions的值
+     * @return array
+     * @throws \Exception
      */
-    protected function xUploadFile($dir, $url, $input, $extensions = [], $originalName = false)
+    protected function uploadFile($input, $dir, $url, $rename = true, $extensions = [], $type = 'all')
     {
         $request = request();
         // 检查文件
         if (!$request->files->has($input)) {
-            throw new ApiException('未上传文件');
+            throw new \Exception('未上传文件');
         }
         $file = $request->file($input);
         if (is_array($file)) {
             $file = current($file);
         }
-
-        $ext = $file->getClientOriginalExtension();
-        $ext = strtolower($ext);
-        if (!empty($extensions) && !in_array($ext, $extensions)) {
-            throw new ApiException('文件类型不合法');
+        // 检查文件类型及扩展名
+        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($extension);
+        if (!empty($extensions)) {
+            if (!isset($extensions[$extension])) {
+                throw new \Exception('文件类型不合法');
+            }
+            $fileType = $extensions[$extension];
+            if ($type != 'all' && $type != $fileType) {
+                throw new \Exception('文件类型不合法');
+            }
         }
-
-        if ($originalName) {
+        // 目录
+        if (!empty($fileType) && stripos($dir, '{{FILE_TYPE}}') !== false) {
+            $dir = str_replace('{{FILE_TYPE}}', $fileType, $dir);
+            $url = str_replace('{{FILE_TYPE}}', $fileType, $url);
+        }
+        if (stripos($dir, '{{USER_ID}}') !== false) {
+            $guard = empty($this->guard) ? '' : $this->guard;
+            $uid = request()->user($guard) ? request()->user($guard)->id : 0;
+            if ($uid > 0) {
+                $dir = str_replace('{{USER_ID}}', $uid, $dir);
+                $url = str_replace('{{USER_ID}}', $uid, $url);
+            }
+        }
+        // 文件名
+        if (!$rename) {
             $filename = $file->getClientOriginalName();
         } else {
-            $filename = date('His') . mt_rand(1111, 9999) . '.' . $ext;
+            $filename = date('His') . mt_rand(1111, 9999) . '.' . $extension;
         }
         $url = $url . '/' . $filename;
         $filePath = $dir . '/' . $filename;
+        $size = $file->getSize();
+        $data = [
+            'filename' => $filename,
+            'url' => $url,
+            'type' => empty($fileType) ? $file->getMimeType() : $fileType,
+            'path' => parse_url($url, PHP_URL_PATH),
+            'original_name' => $file->getClientOriginalName(),
+            'extension' => $extension,
+            'size' => $size,
+        ];
         if (file_exists($filePath)) {
             if (md5_file($filePath) == md5_file($file->path())) {
-                return $this->responseData($url);
+                return $data;
             }
-            throw new ApiException('文件名已经存在');
+            throw new \Exception('文件名已经存在');
         }
-        try {
-            $file->move($dir, $filename);
-            return $this->responseData($url);
-        } catch (\Exception $e) {
-            throw new ApiException('上传失败');
-        }
+        $file->move($dir, $filename);
+        return $data;
     }
 
     /**
