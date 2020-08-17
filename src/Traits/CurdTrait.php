@@ -407,7 +407,7 @@ trait CurdTrait
         if (!$rename) {
             $filename = $file->getClientOriginalName();
         } else {
-            $filename = date('His') . mt_rand(1111, 9999) . '.' . $extension;
+            $filename = uniqid() . mt_rand(100000, 999999) . '.' . $extension;
         }
         $url = $url . '/' . $filename;
         $filePath = $dir . '/' . $filename;
