@@ -5,6 +5,7 @@ namespace Yeosz\LaravelCurd;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Builder as EBuilder;
 use Illuminate\Http\Request;
+use DB;
 
 /**
  * Class Query
@@ -96,7 +97,7 @@ class Query
      * 合计
      * 支持的函数有COUNT,MAX,AVG,MIN,MAX,SUM,GROUP_CONCAT
      *
-     * @param Illuminate\Contracts\Pagination\LengthAwarePaginator|Illuminate\Support\Collection $list
+     * @param \Illuminate\Pagination\LengthAwarePaginator|Illuminate\Support\Collection $list
      * @param EBuilder|Builder $query 查询
      * @param array $columns 字段 $totalFields = ['count1' => 'count','table.f1','MIN(table.f2)']
      * @param string $foreignKey 外键
@@ -107,6 +108,7 @@ class Query
     {
         $getColumn = function ($column, $as) {
             if (is_numeric($as)) {
+                $as = $column;
                 $start = strpos($column, '.') + 1;
                 if ($start > 1) {
                     $as = substr($column, $start);
