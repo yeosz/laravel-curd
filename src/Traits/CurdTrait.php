@@ -199,12 +199,12 @@ trait CurdTrait
         return $this->responseSuccess();
     }
 
-    /**
+  /**
      * 修改列
      *
      * @param int $id
      * @param array|\Illuminate\Http\Request $new 待保存的内容
-     * @param array $valueIn 取值范围
+     * @param array $valueIn 取值范围 ['column1' => [1,2], 'column2'=>[]]
      * @return \Illuminate\Http\JsonResponse
      * @throws ApiException
      */
@@ -216,20 +216,22 @@ trait CurdTrait
             throw new ApiException('数据不存在', ApiException::ERROR_NOT_FOUND);
         }
         if ($new instanceof \Illuminate\Http\Request) {
-            $new = $new->all();
-        }
-        if (!is_array($new) || empty($new)) {
-            throw new ApiException('参数异常', ApiException::ERROR_NOT_FOUND);
-        }
-        if (!empty($new['name']) && isset($new['value'])) {
-            $column = $new['name'];
-            $value = $new['value'];
+            if ($new->has(['pk', 'name', 'value'])) {
+                $column = $new['name'];
+                $value = $new['value'];
+            } else {
+                throw new ApiException('参数异常', ApiException::ERROR_NOT_FOUND);
+            }
         } else {
             $column = key($new);
             $value = current($new);
         }
 
-        if ($valueIn && !in_array($value, $valueIn)) {
+        if (!empty($valueIn) && !isset($valueIn[$column])) {
+            if (!in_array($value, $valueIn)) {
+                throw new ApiException('参数不合法', ApiException::ERROR_NOT_FOUND);
+            }
+        } elseif (!empty($valueIn[$column]) && !in_array($value, $valueIn[$column])) {
             throw new ApiException('参数不合法', ApiException::ERROR_NOT_FOUND);
         }
 
