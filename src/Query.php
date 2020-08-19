@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
  * @method $this when($value, $callback, $default = null)
  * @method $this orderBy($column, $direction)
  * @method $this select($columns = array())
- * @method \Illuminate\Contracts\Pagination\LengthAwarePaginator  paginate($perPage = null, $columns = array(), $pageName = 'page', $page = null)
+ * @method \Illuminate\Pagination\LengthAwarePaginator  paginate($perPage = null, $columns = array(), $pageName = 'page', $page = null)
  * @method \Illuminate\Database\Eloquent\Collection get($columns = array())
  * @method \Illuminate\Support\Collection pluck($column, $key = null)
  * @method string toSql()
