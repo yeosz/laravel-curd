@@ -307,12 +307,13 @@ trait CurdTrait
      * 删除
      *
      * @param $id
+     * @param \Closure|null $closure
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
-    protected function xDelete($id)
+    protected function xDelete($id, \Closure $closure = null)
     {
-        $count = $this->xExecuteDelete([$id]);
+        $count = $this->xExecuteDelete([$id], $closure);
 
         return $this->responseData($count, '删除成功');
     }
@@ -321,16 +322,17 @@ trait CurdTrait
      * 批量删除
      *
      * @param array|\Illuminate\Http\Request $ids
+     * @param \Closure|null $closure
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
-    protected function xBatchDelete($ids)
+    protected function xBatchDelete($ids, \Closure $closure = null)
     {
         if ($ids instanceof \Illuminate\Http\Request) {
             $ids = $this->getRequestParamIds($ids, true);
         }
 
-        $count = $this->xExecuteDelete($ids);
+        $count = $this->xExecuteDelete($ids, $closure);
 
         return $this->responseData($count);
     }
@@ -339,10 +341,11 @@ trait CurdTrait
      * 执行删除操作
      *
      * @param array $ids
+     * @param \Closure|null $closure
      * @return bool
      * @throws \Exception
      */
-    protected function xExecuteDelete($ids = [])
+    protected function xExecuteDelete($ids = [], \Closure $closure = null)
     {
         $model = $this->getModel();
         if (property_exists($model, 'forceDeleting')) {
@@ -351,10 +354,25 @@ trait CurdTrait
                 $model::getModel()->getDeletedAtColumn() => $model->getModel()->freshTimestampString(),
             ];
             $new = $this->appendOperator('delete', $new);
-            return $model->whereIn('id', $ids)->update($new);
+            if (!is_null($closure)) {
+                \DB::beginTransaction();
+                $affect = $model->whereIn('id', $ids)->update($new);
+                $closure($ids);
+                \DB::commit();
+            } else {
+                $affect = $model->whereIn('id', $ids)->update($new);
+            }
         } else {
-            return $model->whereIn('id', $ids)->delete();
+            if (!is_null($closure)) {
+                \DB::beginTransaction();
+                $affect = $model->whereIn('id', $ids)->delete();
+                $closure($ids);
+                \DB::commit();
+            } else {
+                $affect = $model->whereIn('id', $ids)->delete();
+            }
         }
+        return $affect;
     }
 
     /**
