@@ -321,6 +321,9 @@ class Query
      */
     private function queryWhere($query, $column, $operator, $value, $and)
     {
+        if ($operator == 'compare') {
+            $operator = is_array($value) ? 'in' : '=';
+        }
         /** @var $query Builder|EBuilder */
         switch ($operator) {
             case 'raw':
