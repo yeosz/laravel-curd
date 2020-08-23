@@ -140,6 +140,7 @@ trait TreeTrait
         // 创建基于主键的数组引用
         $refer = [];
         foreach ($list as $key => $data) {
+            $list[$key][$child] = [];
             $refer[$data[$pk]] =& $list[$key];
         }
 
