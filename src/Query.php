@@ -80,6 +80,7 @@ class Query
     public function builder($configs, $orderBy = false)
     {
         foreach ($configs as $key => $config) {
+            if (empty($config[1])) continue;
             $config[2] = isset($config[2]) ? $config[2] : $config[0];
             if (is_array($config[1])) {
                 call_user_func_array([$this, 'xWhenPluck'], $config);
@@ -159,12 +160,19 @@ class Query
      * @param string $operator %like,like,like%,=
      * @param string|array $column 数组表示可多个字段
      * @param bool $and and或or
+     * @param callable|null $callback
      * @return $this
      */
-    public function xWhen($key, $operator = '=', $column = '', $and = true)
+    public function xWhen($key, $operator = '=', $column = '', $and = true, $callback = null)
     {
-        $this->query->when(!empty($this->request[$key]), function ($query) use ($key, $column, $operator, $and) {
+        $this->query->when(!empty($this->request[$key]), function ($query) use ($key, $column, $operator, $and, $callback) {
             $value = $this->request[$key];
+            if (!empty($callback) && is_callable($callback)) {
+                $value = call_user_func_array($callback, [$value]);
+                if ($value === false) {
+                    return $query;
+                }
+            }
             $column = empty($column) ? $key : $column;
             /** @var EBuilder $query */
             if (is_array($column)) {
@@ -198,13 +206,21 @@ class Query
      * @param string $key
      * @param array $table ['users','name','id','deleted_at is null']
      * @param string|array $column
+     * @param string|array $column
      * @param bool $and
      * @return $this
      */
-    public function xWhenPluck($key, $table, $column = '', $and = true)
+    public function xWhenPluck($key, $table, $column = '', $and = true, $callback = null)
     {
         if (!empty($this->request[$key])) {
-            $value = is_array($this->request[$key]) ? $this->request[$key] : explode(',', $this->request[$key]);
+            $value = $this->request[$key];
+            if (!empty($callback) && is_callable($callback)) {
+                $value = call_user_func_array($callback, [$value]);
+                if ($value === false) {
+                    return $query;
+                }
+            }
+            $value = is_array($value) ? $value : explode(',', $value);
             $column = empty($column) ? $key : $column;
             $query = DB::table($table[0])->whereIn($table[1], $value);
             if (isset($table[3])) {
