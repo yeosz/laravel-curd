@@ -160,12 +160,13 @@ class Query
      * @param string $operator %like,like,like%,=
      * @param string|array $column 数组表示可多个字段
      * @param bool $and and或or
-     * @param callable|null $callback
+     * @param callable|null $callback 特殊值:not_empty
      * @return $this
      */
     public function xWhen($key, $operator = '=', $column = '', $and = true, $callback = null)
     {
-        $this->query->when(!empty($this->request[$key]), function ($query) use ($key, $column, $operator, $and, $callback) {
+        $has = $callback == 'not_empty' ? !empty($this->request[$key]) : (isset($this->request[$key]) && $this->request[$key] !== '');
+        $this->query->when($has, function ($query) use ($key, $column, $operator, $and, $callback) {
             $value = $this->request[$key];
             if (!empty($callback) && is_callable($callback)) {
                 $value = call_user_func_array($callback, [$value]);
@@ -208,11 +209,13 @@ class Query
      * @param string|array $column
      * @param string|array $column
      * @param bool $and
+     * @param callable|null $callback 特殊值:not_empty
      * @return $this
      */
     public function xWhenPluck($key, $table, $column = '', $and = true, $callback = null)
     {
-        if (!empty($this->request[$key])) {
+        $has = $callback == 'not_empty' ? !empty($this->request[$key]) : (isset($this->request[$key]) && $this->request[$key] !== '');
+        if ($has) {
             $value = $this->request[$key];
             if (!empty($callback) && is_callable($callback)) {
                 $value = call_user_func_array($callback, [$value]);
