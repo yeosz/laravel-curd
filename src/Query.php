@@ -346,6 +346,7 @@ class Query
         /** @var $query Builder|EBuilder */
         switch ($operator) {
             case 'raw':
+                $value = strpos($column, '?') === false ? [] : $value;
                 $query = $and ? $query->whereRaw($column, $value) : $query->orWhereRaw($column, $value);
                 break;
             case 'in':
