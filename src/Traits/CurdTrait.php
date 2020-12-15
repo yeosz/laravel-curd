@@ -243,7 +243,7 @@ trait CurdTrait
             throw new ApiException($e->getMessage());
         }
 
-        return $this->responseSuccess('修改成功');
+        return $this->responseData($row->{$column}, '修改成功');
     }
 
     /**
